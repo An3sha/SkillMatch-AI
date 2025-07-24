@@ -17,7 +17,7 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
   candidate,
   isOpen,
   onClose,
-  onSelect,
+  // onSelect,
 }) => {
   if (!isOpen || !candidate) return null;
 
@@ -207,7 +207,7 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
           </div>
 
           {/* Action Button - Bottom Right */}
-          <div className="flex justify-end mt-3 pt-2 border-t border-gray-100">
+          {/* <div className="flex justify-end mt-3 pt-2 border-t border-gray-100">
             <Button
               onClick={() => onSelect(candidate.id)}
               className={`py-2 px-4 rounded-lg font-semibold transition-all text-xs h-auto ${
@@ -218,7 +218,7 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
             >
               {candidate.isSelected ? '✓ Selected' : 'Select Candidate'}
             </Button>
-          </div>
+          </div> */}
         </div>
       </DialogContent>
     </Dialog>
