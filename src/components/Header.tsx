@@ -1,17 +1,18 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, Target, Award, LogOut } from 'lucide-react';
 import { Badge } from './ui/badge';
 
 interface HeaderProps {
   selectedCount: number;
   totalCandidates: number;
-  onBuildTeam: () => void;
-  onShowTeams: () => void;
   teamsCount: number;
+  onBuildTeam?: () => void;
   onLogout: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ selectedCount, totalCandidates, onBuildTeam, onShowTeams, teamsCount, onLogout }) => {
+export const Header: React.FC<HeaderProps> = ({ selectedCount, totalCandidates, teamsCount, onBuildTeam, onLogout }) => {
+  const navigate = useNavigate();
   return (
     <header className="bg-white border-b border-gray-100 px-6 py-4">
       <div className="w-full flex items-center justify-between">
@@ -41,14 +42,18 @@ export const Header: React.FC<HeaderProps> = ({ selectedCount, totalCandidates, 
           <div className="flex items-center space-x-3">
             {teamsCount > 0 && (
               <button
-                onClick={onShowTeams}
+                onClick={() => navigate('/teams')}
                 className="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors cursor-pointer"
               >
                 Show Your Teams ({teamsCount})
               </button>
             )}
             <button
-              onClick={onBuildTeam}
+              onClick={() => {
+                if (onBuildTeam) {
+                  onBuildTeam();
+                }
+              }}
               className="bg-[#4c4cc9] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#4c4cc9]/90 transition-colors cursor-pointer"
             >
               Build Team

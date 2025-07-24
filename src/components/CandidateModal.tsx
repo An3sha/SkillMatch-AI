@@ -10,24 +10,24 @@ interface CandidateModalProps {
   candidate: Candidate | null;
   isOpen: boolean;
   onClose: () => void;
-  onSelect: (id: string) => void;
+  onSelect?: (id: string) => void;
 }
 
 export const CandidateModal: React.FC<CandidateModalProps> = ({
   candidate,
   isOpen,
   onClose,
-  // onSelect,
+  onSelect,
 }) => {
   if (!isOpen || !candidate) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-white rounded-xl max-w-3xl w-full max-h-[75vh] overflow-y-auto shadow-2xl p-0">
+      <DialogContent className="!bg-white rounded-xl max-w-3xl w-full max-h-[75vh] overflow-y-auto custom-scrollbar shadow-2xl p-0 border border-gray-200">
         {/* Header */}
         <DialogHeader className="flex flex-col items-center justify-center p-3 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white">
           <div className="text-center">
-            <DialogTitle className="text-lg font-semibold text-gray-900">{candidate.name}</DialogTitle>
+            <DialogTitle className="text-lg font-semibold text-gray-900">{candidate.name || 'name not available'}</DialogTitle>
             <div className="flex items-center justify-center space-x-3 mt-1 text-xs text-gray-600">
               <div className="flex items-center space-x-1">
                 <MapPin className="w-3 h-3" />
@@ -45,7 +45,7 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
           </div>
         </DialogHeader>
 
-        <div className="p-3">
+        <div className="p-3 bg-white">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
             {/* Left Side - Education & Work Experience */}
             <div className="space-y-3">
@@ -207,18 +207,20 @@ export const CandidateModal: React.FC<CandidateModalProps> = ({
           </div>
 
           {/* Action Button - Bottom Right */}
-          {/* <div className="flex justify-end mt-3 pt-2 border-t border-gray-100">
-            <Button
-              onClick={() => onSelect(candidate.id)}
-              className={`py-2 px-4 rounded-lg font-semibold transition-all text-xs h-auto ${
-                candidate.isSelected
-                  ? 'bg-[#4c4cc9] hover:bg-[#4c4cc9]/90 text-white shadow-lg'
-                  : 'bg-[#4c4cc9] hover:bg-[#4c4cc9]/90 text-white shadow-lg'
-              }`}
-            >
-              {candidate.isSelected ? '✓ Selected' : 'Select Candidate'}
-            </Button>
-          </div> */}
+          {onSelect && (
+            <div className="flex justify-end mt-3 pt-2 border-t border-gray-100">
+              <Button
+                onClick={() => onSelect(candidate.id)}
+                className={`py-2 px-4 rounded-lg font-semibold transition-all text-xs h-auto ${
+                  candidate.isSelected
+                    ? 'bg-[#4c4cc9] hover:bg-[#4c4cc9]/90 text-white shadow-lg'
+                    : 'bg-[#4c4cc9] hover:bg-[#4c4cc9]/90 text-white shadow-lg'
+                }`}
+              >
+                {candidate.isSelected ? '✓ Selected' : 'Select Candidate'}
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

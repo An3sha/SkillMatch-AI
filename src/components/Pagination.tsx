@@ -4,28 +4,19 @@ interface PaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
-  totalItems: number;
-  itemsPerPage: number;
 }
 
 export const Pagination: React.FC<PaginationProps> = ({
   currentPage,
   totalPages,
   onPageChange,
-  totalItems,
-  itemsPerPage,
 }) => {
-  // Don't show pagination if there's only one page or no data
-  if (totalPages <= 1 || totalItems === 0) {
-    return null;
-  }
-
   // Generate page numbers for pagination bar
   const getPageNumbers = () => {
-    const pages = [];
+    const pages: (number | string)[] = [];
     
+    // If we have 7 or fewer pages, show all
     if (totalPages <= 7) {
-      // Show all pages if total is 7 or less
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
@@ -35,26 +26,36 @@ export const Pagination: React.FC<PaginationProps> = ({
     // Always show first page
     pages.push(1);
     
-    if (currentPage <= 4) {
-      // Near the beginning: show 2,3,4,5, ..., last
-      for (let i = 2; i <= 5; i++) {
-        pages.push(i);
-      }
+    // Calculate start and end for middle section
+    let start = Math.max(2, currentPage - 1);
+    let end = Math.min(totalPages - 1, currentPage + 1);
+    
+    // Adjust start and end to show 3 pages in middle when possible
+    if (currentPage <= 3) {
+      start = 2;
+      end = Math.min(5, totalPages - 1);
+    } else if (currentPage >= totalPages - 2) {
+      start = Math.max(totalPages - 4, 2);
+      end = totalPages - 1;
+    }
+    
+    // Add ellipsis if there's a gap between 1 and start
+    if (start > 2) {
       pages.push('...');
-      pages.push(totalPages);
-    } else if (currentPage >= totalPages - 3) {
-      // Near the end: show first, ..., last-4, last-3, last-2, last-1, last
+    }
+    
+    // Add middle pages
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    
+    // Add ellipsis if there's a gap between end and last page
+    if (end < totalPages - 1) {
       pages.push('...');
-      for (let i = totalPages - 4; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      // In the middle: show first, ..., current-1, current, current+1, ..., last
-      pages.push('...');
-      pages.push(currentPage - 1);
-      pages.push(currentPage);
-      pages.push(currentPage + 1);
-      pages.push('...');
+    }
+    
+    // Always show last page (if totalPages > 1)
+    if (totalPages > 1) {
       pages.push(totalPages);
     }
     
@@ -76,7 +77,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           num === '...'
             ? <span key={`ellipsis-${idx}`} className="w-10 h-10 flex items-center justify-center text-gray-300 font-semibold">...</span>
             : <button
-                key={`page-${num}-${idx}`}
+                key={`page-${num}`}
                 onClick={() => onPageChange(Number(num))}
                 className={`w-10 h-10 flex items-center justify-center rounded-lg border font-semibold transition-colors text-sm
                   ${currentPage === num ? 'bg-[#4c4cc9] text-white border-[#4c4cc9] shadow' : 'bg-white text-gray-700 border-gray-200 hover:bg-[#4c4cc9]/10 hover:text-[#4c4cc9] hover:border-[#4c4cc9]/40'}`}
@@ -95,6 +96,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           &gt;
         </button>
       </div>
+    
     </div>
   );
 }; 

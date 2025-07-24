@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { supabase } from '../App';
+import { supabase } from '../hooks/useAuth';
 import { Target } from 'lucide-react';
-import { Button } from './ui/button';
+import { Button } from '../components/ui/button';
 
 export const LoginPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
