@@ -1,7 +1,7 @@
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 import React, { useState, useMemo, useEffect } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { LoginPage } from "./components/LoginPage";
-import { AuthCallback } from "./components/AuthCallback";
 import { Header } from "./components/Header";
 import { FilterPanel } from "./components/FilterPanel";
 import { CandidateCard } from "./components/CandidateCard";
@@ -14,8 +14,6 @@ import { SelectedTeam } from "./components/SelectedTeam";
 import { Pagination } from "./components/Pagination";
 import { v4 as uuidv4 } from 'uuid';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -53,56 +51,6 @@ function App() {
   const [currentTeamId, setCurrentTeamId] = useState<string | null>(null);
   const [skillFilter, setSkillFilter] = useState("all");
   const [companyFilter, setCompanyFilter] = useState("all");
-
-  // Immediate localStorage cleanup - runs on every render
-  useEffect(() => {
-    // Clean up all localStorage items immediately
-    localStorage.removeItem("savedTeam");
-    localStorage.removeItem("savedTeams");
-    // Don't remove the Supabase auth token here as it's needed for authentication
-  });
-
-  // Global function to manually clear localStorage (can be called from browser console)
-  useEffect(() => {
-    // @ts-expect-error - Adding global function to window
-    window.clearAppStorage = () => {
-      localStorage.removeItem("savedTeam");
-      localStorage.removeItem("savedTeams");
-      console.log("App localStorage cleared!");
-    };
-  }, []);
-
-  // Check for existing session on app load
-  useEffect(() => {
-    const checkUser = async () => {
-      // Clean up old localStorage items
-      localStorage.removeItem("savedTeam");
-      localStorage.removeItem("savedTeams");
-      
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setIsLoggedIn(true);
-      }
-    };
-    
-    checkUser();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
-          setIsLoggedIn(true);
-        } else if (event === 'SIGNED_OUT') {
-          setIsLoggedIn(false);
-          // Clean up localStorage on sign out
-          localStorage.removeItem("savedTeam");
-          localStorage.removeItem("savedTeams");
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   // Load teams from Supabase on component mount
   const loadTeamsFromDB = async () => {
@@ -428,18 +376,17 @@ function App() {
     return Array.from(companies).sort();
   }, [candidates]);
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    setIsLoggedIn(false);
-    // Clean up all localStorage items
-    localStorage.removeItem("savedTeam");
-    localStorage.removeItem("savedTeams");
-    // Clear Supabase auth token
-    localStorage.removeItem("sb-fkhopyrggtmvikblwwnn-auth-token");
-  };
+  if (!isLoggedIn) {
+    return <LoginPage />;
+  }
+const handleLogout = async () => {
+  await supabase.auth.signOut();
+  setIsLoggedIn(false);
+};
+  
+  
 
-  // Main App Component (authenticated content)
-  const MainApp = () => (
+  return (
     <div className="min-h-screen bg-gray-50">
       <Header
         selectedCount={selectedCandidates.size}
@@ -447,7 +394,7 @@ function App() {
         onBuildTeam={handleBuildTeam}
         onShowTeams={handleShowTeams}
         teamsCount={teams.length}
-        onLogout={handleLogout}
+          onLogout={handleLogout}
       />
 
       <div className="flex">
@@ -599,18 +546,6 @@ function App() {
         </div>
       )}
     </div>
-  );
-
-  return (
-    <Router>
-      <Routes>
-        <Route path="/auth/callback" element={<AuthCallback />} />
-        <Route 
-          path="/" 
-          element={isLoggedIn ? <MainApp /> : <LoginPage />} 
-        />
-      </Routes>
-    </Router>
   );
 }
 
