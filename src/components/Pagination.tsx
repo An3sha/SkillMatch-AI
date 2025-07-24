@@ -4,19 +4,61 @@ interface PaginationProps {
   currentPage: number;
   totalPages: number;
   onPageChange: (page: number) => void;
+  totalItems: number;
+  itemsPerPage: number;
 }
 
 export const Pagination: React.FC<PaginationProps> = ({
   currentPage,
   totalPages,
   onPageChange,
+  totalItems,
+  itemsPerPage,
 }) => {
+  // Don't show pagination if there's only one page or no data
+  if (totalPages <= 1 || totalItems === 0) {
+    return null;
+  }
+
   // Generate page numbers for pagination bar
   const getPageNumbers = () => {
-    if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
-    if (currentPage <= 3) return [1, 2, 3, 4, '...', totalPages];
-    if (currentPage >= totalPages - 2) return [1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
-    return [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+    const pages = [];
+    
+    if (totalPages <= 7) {
+      // Show all pages if total is 7 or less
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+      return pages;
+    }
+    
+    // Always show first page
+    pages.push(1);
+    
+    if (currentPage <= 4) {
+      // Near the beginning: show 2,3,4,5, ..., last
+      for (let i = 2; i <= 5; i++) {
+        pages.push(i);
+      }
+      pages.push('...');
+      pages.push(totalPages);
+    } else if (currentPage >= totalPages - 3) {
+      // Near the end: show first, ..., last-4, last-3, last-2, last-1, last
+      pages.push('...');
+      for (let i = totalPages - 4; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // In the middle: show first, ..., current-1, current, current+1, ..., last
+      pages.push('...');
+      pages.push(currentPage - 1);
+      pages.push(currentPage);
+      pages.push(currentPage + 1);
+      pages.push('...');
+      pages.push(totalPages);
+    }
+    
+    return pages;
   };
 
   return (
@@ -32,9 +74,9 @@ export const Pagination: React.FC<PaginationProps> = ({
         </button>
         {getPageNumbers().map((num, idx) =>
           num === '...'
-            ? <span key={idx} className="w-10 h-10 flex items-center justify-center text-gray-300 font-semibold">...</span>
+            ? <span key={`ellipsis-${idx}`} className="w-10 h-10 flex items-center justify-center text-gray-300 font-semibold">...</span>
             : <button
-                key={num}
+                key={`page-${num}-${idx}`}
                 onClick={() => onPageChange(Number(num))}
                 className={`w-10 h-10 flex items-center justify-center rounded-lg border font-semibold transition-colors text-sm
                   ${currentPage === num ? 'bg-[#4c4cc9] text-white border-[#4c4cc9] shadow' : 'bg-white text-gray-700 border-gray-200 hover:bg-[#4c4cc9]/10 hover:text-[#4c4cc9] hover:border-[#4c4cc9]/40'}`}
@@ -53,7 +95,6 @@ export const Pagination: React.FC<PaginationProps> = ({
           &gt;
         </button>
       </div>
-    
     </div>
   );
 }; 

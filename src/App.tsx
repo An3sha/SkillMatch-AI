@@ -91,10 +91,60 @@ function App() {
   async function fetchProfiles(page = 1) {
     const from = (page - 1) * 10;
     const to = from + 10 - 1;
-    const { data, error, count } = await supabase
+    
+    let query = supabase
       .from("profiles")
-      .select("*", { count: "exact" })
-      .range(from, to);
+      .select("*", { count: "exact" });
+
+    // Apply search filter
+    if (searchTerm) {
+      query = query.or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
+    }
+
+    // Apply location filter
+    if (locationFilter && locationFilter !== "all") {
+      query = query.eq('location', locationFilter);
+    }
+
+    // Apply skill filter
+    if (skillFilter && skillFilter !== "all") {
+      query = query.contains('skills', [skillFilter]);
+    }
+
+    // Apply company filter
+    if (companyFilter && companyFilter !== "all") {
+      query = query.contains('work_experiences', [{ company: companyFilter }]);
+    }
+
+    // Apply salary filter
+    if (salaryRange[0] !== 50000 || salaryRange[1] !== 300000) {
+      // Handle salary as text field with currency formatting
+      query = query.gte('annual_salary_expectation->full-time', `$${salaryRange[0].toLocaleString()}`)
+                   .lte('annual_salary_expectation->full-time', `$${salaryRange[1].toLocaleString()}`);
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+      case "name":
+        query = query.order('name', { ascending: true });
+        break;
+      case "submitted":
+        query = query.order('submitted_at', { ascending: false });
+        break;
+      case "salary":
+        query = query.order('annual_salary_expectation->full-time', { ascending: false });
+        break;
+      case "experience":
+        query = query.order('work_experiences', { ascending: false });
+        break;
+      default:
+        query = query.order('name', { ascending: true });
+    }
+
+    // Apply pagination
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
 
     if (error) {
       console.error("Error fetching profiles:", error.message);
@@ -106,7 +156,15 @@ function App() {
 
   useEffect(() => {
     fetchProfiles(page);
-  }, [page]);
+  }, [page, searchTerm, locationFilter, skillFilter, companyFilter, salaryRange, sortBy]);
+
+  // Reset page to 1 when filters change (but not when page changes)
+  useEffect(() => {
+    const isFilterChange = searchTerm || locationFilter !== "all" || skillFilter !== "all" || companyFilter !== "all" || salaryRange[0] !== 50000 || salaryRange[1] !== 300000;
+    if (isFilterChange && page !== 1) {
+      setPage(1);
+    }
+  }, [searchTerm, locationFilter, skillFilter, companyFilter, salaryRange, sortBy, page]);
 
   const handleSelect = (candidateId: string) => {
     setSelectedCandidates((prev) => {
@@ -262,101 +320,13 @@ function App() {
       isSelected: selectedCandidates.has(candidate.id),
     }));
 
-    // Apply search filter
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (candidate) =>
-          candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          candidate.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          candidate.skills.some((skill) =>
-            skill.toLowerCase().includes(searchTerm.toLowerCase())
-          ) ||
-          candidate.work_experiences?.some(
-            (exp) =>
-              exp.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              exp.roleName.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-      );
-    }
-
-    // Apply location filter
-    if (locationFilter && locationFilter !== "all") {
-      filtered = filtered.filter((candidate) => candidate.location === locationFilter);
-    }
-
-    // Apply skill filter
-    if (skillFilter && skillFilter !== "all") {
-      filtered = filtered.filter((candidate) => 
-        candidate.skills?.some(skill => skill === skillFilter)
-      );
-    }
-
-    // Apply company filter
-    if (companyFilter && companyFilter !== "all") {
-      filtered = filtered.filter((candidate) =>
-        candidate.work_experiences?.some(exp => exp.company === companyFilter)
-      );
-    }
-
-    // Apply salary filter
-    filtered = filtered.filter((candidate) => {
-      if (candidate.annual_salary_expectation["full-time"]) {
-        const salary = parseInt(
-          candidate.annual_salary_expectation["full-time"].replace(/[$,]/g, "")
-        );
-        return salary >= salaryRange[0] && salary <= salaryRange[1];
-      }
-      return true;
-    });
-
-    // Apply show selected filter
+    // Apply show selected filter (client-side only)
     if (showSelected) {
       filtered = filtered.filter((candidate) => candidate.isSelected);
     }
 
-    // Sort candidates
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case "name":
-          return a.name.localeCompare(b.name);
-        case "submitted":
-          return (
-            new Date(b.submitted_at).getTime() -
-            new Date(a.submitted_at).getTime()
-          );
-        case "salary": {
-          const aSalary = parseInt(
-            a.annual_salary_expectation["full-time"]?.replace(/[$,]/g, "") ||
-              "0"
-          );
-          const bSalary = parseInt(
-            b.annual_salary_expectation["full-time"]?.replace(/[$,]/g, "") ||
-              "0"
-          );
-          return bSalary - aSalary;
-        }
-        case "experience":
-          return (
-            (b.work_experiences?.length || 0) -
-            (a.work_experiences?.length || 0)
-          );
-        default:
-          return 0;
-      }
-    });
-
     return filtered;
-  }, [
-    candidates,
-    selectedCandidates,
-    searchTerm,
-    sortBy,
-    locationFilter,
-    skillFilter,
-    companyFilter,
-    showSelected,
-    salaryRange,
-  ]);
+  }, [candidates, selectedCandidates, showSelected]);
 
   const selectedCandidatesList = candidates.filter((c) =>
     selectedCandidates.has(c.id)
@@ -364,8 +334,10 @@ function App() {
 
   const pageSize = 10;
 
-  // Pagination helpers
-  const totalPages = Math.ceil(totalCount / pageSize);
+  // Calculate pagination based on server-side results
+  const totalPages = showSelected 
+    ? Math.ceil(filteredAndSortedCandidates.length / pageSize)
+    : Math.ceil(totalCount / pageSize);
 
   // Create available options for filters
   const availableSkills = useMemo(() => {
@@ -469,14 +441,29 @@ const handleLogout = async () => {
 
             {!showSelected && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                {filteredAndSortedCandidates.map((candidate) => (
+                {candidates.map((candidate) => (
                   <CandidateCard
                     key={candidate.id}
-                    candidate={candidate}
+                    candidate={{ ...candidate, isSelected: selectedCandidates.has(candidate.id) }}
                     onSelect={handleSelect}
                     onViewDetails={handleViewDetails}
                   />
                 ))}
+              </div>
+            )}
+
+            {showSelected && (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                {filteredAndSortedCandidates
+                  .slice((page - 1) * pageSize, page * pageSize)
+                  .map((candidate) => (
+                    <CandidateCard
+                      key={candidate.id}
+                      candidate={candidate}
+                      onSelect={handleSelect}
+                      onViewDetails={handleViewDetails}
+                    />
+                  ))}
               </div>
             )}
 
@@ -498,6 +485,8 @@ const handleLogout = async () => {
               currentPage={page}
               totalPages={totalPages}
               onPageChange={setPage}
+              totalItems={showSelected ? filteredAndSortedCandidates.length : totalCount}
+              itemsPerPage={pageSize}
             />
           </div>
         </div>
