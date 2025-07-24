@@ -119,8 +119,10 @@ function App() {
     // Apply salary filter
     if (salaryRange[0] !== 50000 || salaryRange[1] !== 300000) {
       // Handle salary as text field with currency formatting
-      query = query.gte('annual_salary_expectation->full-time', `$${salaryRange[0].toLocaleString()}`)
-                   .lte('annual_salary_expectation->full-time', `$${salaryRange[1].toLocaleString()}`);
+     query = query
+  .gte('salary_numeric', salaryRange[0])
+  .lte('salary_numeric', salaryRange[1]);
+
     }
 
     // Apply sorting
@@ -325,8 +327,22 @@ function App() {
       filtered = filtered.filter((candidate) => candidate.isSelected);
     }
 
+    // Apply salary filter (client-side)
+    if (salaryRange[0] !== 50000 || salaryRange[1] !== 300000) {
+      const minSalary = salaryRange[0].toString();
+      const maxSalary = salaryRange[1].toString();
+      filtered = filtered.filter(candidate => {
+        const salary = candidate.annual_salary_expectation?.['full-time']?.replace(/[^0-9]/g, '');
+        if (salary) {
+          const salaryNum = parseInt(salary, 10);
+          return salaryNum >= parseInt(minSalary, 10) && salaryNum <= parseInt(maxSalary, 10);
+        }
+        return false;
+      });
+    }
+
     return filtered;
-  }, [candidates, selectedCandidates, showSelected]);
+  }, [candidates, selectedCandidates, showSelected, salaryRange]);
 
   const selectedCandidatesList = candidates.filter((c) =>
     selectedCandidates.has(c.id)
@@ -469,9 +485,7 @@ const handleLogout = async () => {
 
             {filteredAndSortedCandidates.length === 0 && (
               <div className="text-center py-16">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                  <span className="text-2xl">🔍</span>
-                </div>
+                
                 <div className="text-gray-500 text-lg mb-2">
                   No candidates found
                 </div>
