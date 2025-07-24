@@ -4,7 +4,6 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { Slider } from './ui/slider';
 import { Badge } from './ui/badge';
 
 interface FilterPanelProps {
@@ -50,13 +49,6 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   availableLocations,
   availableCompanies,
 }) => {
-  const handleSalaryChange = (index: number, value: string) => {
-    const numValue = parseInt(value) * 1000;
-    const newRange: [number, number] = [...salaryRange];
-    newRange[index] = numValue;
-    setSalaryRange(newRange);
-  };
-
   return (
     <div className="w-1/4 bg-white border-r border-gray-100 p-4 space-y-4 flex-shrink-0 min-h-screen">
       {/* Selected Candidates Section */}
@@ -198,56 +190,36 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
         </div>
 
         {/* Salary Range */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           <Label className="text-xs font-medium text-gray-700 flex items-center space-x-1">
             <DollarSign className="w-3 h-3 text-emerald-600" />
             <span>Salary Range</span>
           </Label>
           
-          <div className="space-y-3">
-            {/* Salary Slider */}
-            <Slider
-              value={[salaryRange[0] / 1000, salaryRange[1] / 1000]}
-              onValueChange={(value) => setSalaryRange([value[0] * 1000, value[1] * 1000])}
-              max={300}
-              min={50}
-              step={10}
-              className="w-full"
-            />
-            
-            {/* Min/Max Inputs */}
-            <div className="flex items-center space-x-3">
-              <div className="flex-1">
-                <Label className="block text-xs text-gray-500 mb-1">Min ($k)</Label>
-                <Input
-                  type="number"
-                  min="50"
-                  max="300"
-                  step="10"
-                  value={salaryRange[0] / 1000}
-                  onChange={(e) => handleSalaryChange(0, e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#4c4cc9] focus:border-[#4c4cc9] h-auto bg-white"
-                />
-              </div>
-              <div className="flex-1">
-                <Label className="block text-xs text-gray-500 mb-1">Max ($k)</Label>
-                <Input
-                  type="number"
-                  min="50"
-                  max="300"
-                  step="10"
-                  value={salaryRange[1] / 1000}
-                  onChange={(e) => handleSalaryChange(1, e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-[#4c4cc9] focus:border-[#4c4cc9] h-auto bg-white"
-                />
-              </div>
-            </div>
-            
-            {/* Salary Display */}
-            <div className="text-xs text-gray-500 text-center">
-              ${(salaryRange[0] / 1000).toFixed(0)}k - ${(salaryRange[1] / 1000).toFixed(0)}k annually
-            </div>
-          </div>
+          <Select 
+            value={salaryRange[0] === 50000 && salaryRange[1] === 300000 ? "all" : `${salaryRange[0]}-${salaryRange[1]}`}
+            onValueChange={(value) => {
+              if (value === "all") {
+                setSalaryRange([50000, 300000]);
+              } else {
+                const [min, max] = value.split('-').map(v => parseInt(v));
+                setSalaryRange([min, max]);
+              }
+            }}
+          >
+            <SelectTrigger className="w-full border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-[#4c4cc9] focus:border-[#4c4cc9] text-sm bg-gray-50">
+              <SelectValue placeholder="All salary ranges" />
+            </SelectTrigger>
+            <SelectContent className="!opacity-100 !visible z-50 bg-white">
+              <SelectItem value="all">All Salary Ranges</SelectItem>
+              <SelectItem value="50000-80000">$50k - $80k</SelectItem>
+              <SelectItem value="80000-120000">$80k - $120k</SelectItem>
+              <SelectItem value="120000-160000">$120k - $160k</SelectItem>
+              <SelectItem value="160000-200000">$160k - $200k</SelectItem>
+              <SelectItem value="200000-250000">$200k - $250k</SelectItem>
+              <SelectItem value="250000-300000">$250k - $300k</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>

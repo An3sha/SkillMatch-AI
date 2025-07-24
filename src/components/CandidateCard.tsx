@@ -66,7 +66,7 @@ export const CandidateCard: React.FC<CandidateCardProps> = ({
                 EXPERIENCE
               </div>
               <div className="text-xs font-semibold text-gray-900">
-                {calculateYearsOfExperience()} pos
+                {calculateYearsOfExperience()} positions
               </div>
               <div className="text-[11px] text-gray-900 truncate">
                 {candidate.work_experiences[0]?.roleName || 'N/A'}
