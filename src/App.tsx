@@ -14,7 +14,6 @@ import { SelectedTeam } from "./components/SelectedTeam";
 import { Pagination } from "./components/Pagination";
 import { v4 as uuidv4 } from 'uuid';
 
-
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 function App() {
