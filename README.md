@@ -60,22 +60,30 @@ An AI-powered hiring platform that helps recruiters **discover and shortlist can
 ```bash
 git clone https://github.com/your-username/talenthub.git
 cd talenthub
+```
 
 ### 2. Install Dependencies
 
 ```bash
 npm install
+```
 
-### Add .env file
+### 3. Add `.env` File
 
-Create a .env file in the root with the following:
-```bash
+Create a `.env` file in the root directory with the following:
+
+```env
 VITE_SUPABASE_URL=https://your-project-id.supabase.co
 VITE_SUPABASE_ANON_KEY=your-anon-key
 VITE_OPENAI_API_KEY=your-openai-key
 VITE_RAG_PIPE_URL=https://your-api-url-if-separate
+```
 
-### Run the App
+### 4. Run the App
+
 ```bash
 npm run dev
+```
+
+
 
