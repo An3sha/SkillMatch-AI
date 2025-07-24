@@ -241,7 +241,7 @@ const formatCandidateResponse = (content: string) => {
       {!showChat && (
         <button
           onClick={() => setShowChat(true)}
-          className="flex items-center justify-center w-14 h-14 rounded-full bg-[#4c4cc9] shadow-lg hover:bg-[#4c4cc9]/90 transition-colors text-white text-2xl focus:outline-none focus:ring-2 focus:ring-[#4c4cc9]/40"
+          className="flex items-center justify-center w-14 h-14 rounded-full bg-[#4c4cc9] shadow-lg hover:bg-[#4c4cc9]/90 transition-colors text-white text-2xl focus:outline-none"
           aria-label="Open chat bot"
         >
           <MessageCircle className="w-7 h-7" />
@@ -262,7 +262,7 @@ const formatCandidateResponse = (content: string) => {
             </button>
           </div>
           {/* Messages Area */}
-          <div className="flex-1 px-4 py-3 overflow-y-auto bg-gray-50 text-sm text-gray-700">
+                        <div className="flex-1 px-4 py-3 overflow-y-auto bg-gray-50 text-sm text-gray-700 custom-scrollbar">
             {messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-400">
                 <MessageCircle className="w-8 h-8 mb-2" />
@@ -320,7 +320,7 @@ const formatCandidateResponse = (content: string) => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Type your message..."
-              className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#4c4cc9] bg-gray-50"
+              className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-[#4c4cc9] bg-gray-50"
               disabled={isLoading}
             />
             <button
