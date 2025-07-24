@@ -15,8 +15,8 @@ export const Pagination: React.FC<PaginationProps> = ({
   totalItems,
   itemsPerPage,
 }) => {
-  // Don't show pagination if there's only one page or no data
-  if (totalPages <= 1 || totalItems === 0) {
+  // Don't show pagination if there's only one page, no data, or invalid state
+  if (totalPages <= 1 || totalItems === 0 || currentPage > totalPages) {
     return null;
   }
 

@@ -169,7 +169,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
         </div>
 
         {/* Company */}
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <Label className="text-xs font-medium text-gray-700 flex items-center space-x-1">
             <Building className="w-3 h-3" />
             <span>Company</span>
@@ -187,7 +187,7 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </div> */}
 
         {/* Salary Range */}
         <div className="space-y-2">

@@ -317,25 +317,25 @@ function App() {
   };
 
   const filteredAndSortedCandidates = useMemo(() => {
+    // Only apply client-side filtering for "show selected" view
+    // All other filtering should be handled server-side
     let filtered = candidates.map((candidate) => ({
       ...candidate,
       isSelected: selectedCandidates.has(candidate.id),
     }));
 
-    // Apply show selected filter (client-side only)
+    // Only apply show selected filter (client-side only)
     if (showSelected) {
       filtered = filtered.filter((candidate) => candidate.isSelected);
     }
 
-    // Apply salary filter (client-side)
+    // Apply salary filter (client-side only for now)
     if (salaryRange[0] !== 50000 || salaryRange[1] !== 300000) {
-      const minSalary = salaryRange[0].toString();
-      const maxSalary = salaryRange[1].toString();
       filtered = filtered.filter(candidate => {
         const salary = candidate.annual_salary_expectation?.['full-time']?.replace(/[^0-9]/g, '');
         if (salary) {
           const salaryNum = parseInt(salary, 10);
-          return salaryNum >= parseInt(minSalary, 10) && salaryNum <= parseInt(maxSalary, 10);
+          return salaryNum >= salaryRange[0] && salaryNum <= salaryRange[1];
         }
         return false;
       });
@@ -351,9 +351,17 @@ function App() {
   const pageSize = 10;
 
   // Calculate pagination based on server-side results
+  // For showSelected view, use client-side filtered results
+  // For main view, use server-side total count
   const totalPages = showSelected 
     ? Math.ceil(filteredAndSortedCandidates.length / pageSize)
     : Math.ceil(totalCount / pageSize);
+
+  // Only show pagination when there are multiple pages and we're not in showSelected mode
+  // or when showSelected has enough items to paginate
+  const shouldShowPagination = showSelected 
+    ? filteredAndSortedCandidates.length > pageSize
+    : totalCount > pageSize;
 
   // Create available options for filters
   const availableSkills = useMemo(() => {
@@ -495,13 +503,15 @@ const handleLogout = async () => {
               </div>
             )}
 
-            <Pagination
-              currentPage={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-              totalItems={showSelected ? filteredAndSortedCandidates.length : totalCount}
-              itemsPerPage={pageSize}
-            />
+            {shouldShowPagination && (
+              <Pagination
+                currentPage={page}
+                totalPages={totalPages}
+                onPageChange={setPage}
+                totalItems={showSelected ? filteredAndSortedCandidates.length : totalCount}
+                itemsPerPage={pageSize}
+              />
+            )}
           </div>
         </div>
       </div>
