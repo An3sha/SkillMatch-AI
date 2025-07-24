@@ -49,6 +49,8 @@ function App() {
     }>
   >([]);
   const [currentTeamId, setCurrentTeamId] = useState<string | null>(null);
+  const [skillFilter, setSkillFilter] = useState("all");
+  const [companyFilter, setCompanyFilter] = useState("all");
 
   // Load teams from Supabase on component mount
   const loadTeamsFromDB = async () => {
@@ -291,34 +293,22 @@ function App() {
     }
 
     // Apply location filter
-    if (locationFilter) {
-      filtered = filtered.filter((candidate) => {
-        if (locationFilter === "all") {
-          return true;
-        }
-        if (locationFilter === "US") {
-          return (
-            candidate.location.includes("CA") ||
-            candidate.location.includes("NY") ||
-            candidate.location.includes("IL") ||
-            candidate.location.includes("WA") ||
-            candidate.location.includes("FL") ||
-            candidate.location.includes("MA") ||
-            candidate.location.includes("TX")
-          );
-        } else if (locationFilter === "International") {
-          return (
-            !candidate.location.includes("CA") &&
-            !candidate.location.includes("NY") &&
-            !candidate.location.includes("IL") &&
-            !candidate.location.includes("WA") &&
-            !candidate.location.includes("FL") &&
-            !candidate.location.includes("MA") &&
-            !candidate.location.includes("TX")
-          );
-        }
-        return true;
-      });
+    if (locationFilter && locationFilter !== "all") {
+      filtered = filtered.filter((candidate) => candidate.location === locationFilter);
+    }
+
+    // Apply skill filter
+    if (skillFilter && skillFilter !== "all") {
+      filtered = filtered.filter((candidate) => 
+        candidate.skills?.some(skill => skill === skillFilter)
+      );
+    }
+
+    // Apply company filter
+    if (companyFilter && companyFilter !== "all") {
+      filtered = filtered.filter((candidate) =>
+        candidate.work_experiences?.some(exp => exp.company === companyFilter)
+      );
     }
 
     // Apply salary filter
@@ -375,6 +365,8 @@ function App() {
     searchTerm,
     sortBy,
     locationFilter,
+    skillFilter,
+    companyFilter,
     showSelected,
     salaryRange,
   ]);
@@ -387,6 +379,33 @@ function App() {
 
   // Pagination helpers
   const totalPages = Math.ceil(totalCount / pageSize);
+
+  // Create available options for filters
+  const availableSkills = useMemo(() => {
+    const skills = new Set<string>();
+    candidates.forEach(candidate => {
+      candidate.skills?.forEach(skill => skills.add(skill));
+    });
+    return Array.from(skills).sort();
+  }, [candidates]);
+
+  const availableLocations = useMemo(() => {
+    const locations = new Set<string>();
+    candidates.forEach(candidate => {
+      if (candidate.location) locations.add(candidate.location);
+    });
+    return Array.from(locations).sort();
+  }, [candidates]);
+
+  const availableCompanies = useMemo(() => {
+    const companies = new Set<string>();
+    candidates.forEach(candidate => {
+      candidate.work_experiences?.forEach(exp => {
+        if (exp.company) companies.add(exp.company);
+      });
+    });
+    return Array.from(companies).sort();
+  }, [candidates]);
 
   if (!isLoggedIn) {
     return <LoginPage />;
@@ -424,6 +443,13 @@ const handleLogout = async () => {
           setSalaryRange={setSalaryRange}
           selectedCount={selectedCandidates.size}
           onUnselectAll={handleUnselectAll}
+          skillFilter={skillFilter}
+          setSkillFilter={setSkillFilter}
+          companyFilter={companyFilter}
+          setCompanyFilter={setCompanyFilter}
+          availableSkills={availableSkills}
+          availableLocations={availableLocations}
+          availableCompanies={availableCompanies}
         />
 
         {/* Main Content */}

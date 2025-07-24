@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, Users, MapPin, X, SlidersHorizontal, DollarSign } from 'lucide-react';
+import { Search, Users, MapPin, X, SlidersHorizontal, DollarSign, Building, Code } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -20,6 +20,13 @@ interface FilterPanelProps {
   setSalaryRange: (range: [number, number]) => void;
   selectedCount: number;
   onUnselectAll: () => void;
+  skillFilter: string;
+  setSkillFilter: (skill: string) => void;
+  companyFilter: string;
+  setCompanyFilter: (company: string) => void;
+  availableSkills: string[];
+  availableLocations: string[];
+  availableCompanies: string[];
 }
 
 export const FilterPanel: React.FC<FilterPanelProps> = ({
@@ -35,6 +42,13 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   setSalaryRange,
   selectedCount,
   onUnselectAll,
+  skillFilter,
+  setSkillFilter,
+  companyFilter,
+  setCompanyFilter,
+  availableSkills,
+  availableLocations,
+  availableCompanies,
 }) => {
   const handleSalaryChange = (index: number, value: string) => {
     const numValue = parseInt(value) * 1000;
@@ -132,8 +146,53 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
             </SelectTrigger>
             <SelectContent className="!opacity-100 !visible z-50 bg-white">
               <SelectItem value="all">All Locations</SelectItem>
-              <SelectItem value="US">United States</SelectItem>
-              <SelectItem value="International">International</SelectItem>
+              {availableLocations.map((location) => (
+                <SelectItem key={location} value={location}>
+                  {location}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Skills */}
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-gray-700 flex items-center space-x-1">
+            <Code className="w-3 h-3" />
+            <span>Skills</span>
+          </Label>
+          <Select value={skillFilter} onValueChange={setSkillFilter}>
+            <SelectTrigger className="w-full border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-[#4c4cc9] focus:border-[#4c4cc9] text-sm bg-gray-50">
+              <SelectValue placeholder="All skills" />
+            </SelectTrigger>
+            <SelectContent className="!opacity-100 !visible z-50 bg-white">
+              <SelectItem value="all">All Skills</SelectItem>
+              {availableSkills.map((skill) => (
+                <SelectItem key={skill} value={skill}>
+                  {skill}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Company */}
+        <div className="space-y-2">
+          <Label className="text-xs font-medium text-gray-700 flex items-center space-x-1">
+            <Building className="w-3 h-3" />
+            <span>Company</span>
+          </Label>
+          <Select value={companyFilter} onValueChange={setCompanyFilter}>
+            <SelectTrigger className="w-full border border-gray-200 rounded-xl px-3 py-2.5 focus:ring-2 focus:ring-[#4c4cc9] focus:border-[#4c4cc9] text-sm bg-gray-50">
+              <SelectValue placeholder="All companies" />
+            </SelectTrigger>
+            <SelectContent className="!opacity-100 !visible z-50 bg-white">
+              <SelectItem value="all">All Companies</SelectItem>
+              {availableCompanies.map((company) => (
+                <SelectItem key={company} value={company}>
+                  {company}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
