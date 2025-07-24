@@ -51,6 +51,25 @@ function App() {
   const [skillFilter, setSkillFilter] = useState("all");
   const [companyFilter, setCompanyFilter] = useState("all");
 
+  // Check authentication state on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setIsLoggedIn(!!user);
+    };
+    
+    checkAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setIsLoggedIn(!!session?.user);
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   // Load teams from Supabase on component mount
   const loadTeamsFromDB = async () => {
     const { data, error } = await supabase
