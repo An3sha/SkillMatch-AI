@@ -344,10 +344,6 @@ function App() {
     return filtered;
   }, [candidates, selectedCandidates, showSelected, salaryRange]);
 
-  const selectedCandidatesList = candidates.filter((c) =>
-    selectedCandidates.has(c.id)
-  );
-
   const pageSize = 10;
 
   // Calculate pagination based on server-side results
@@ -439,21 +435,6 @@ const handleLogout = async () => {
                 {filteredAndSortedCandidates.length !== 1 ? "s" : ""} available
               </p>
             </div>
-
-            {showSelected && selectedCandidatesList.length > 0 && (
-              <div className="mb-8">
-                <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-2 gap-6">
-                  {selectedCandidatesList.map((candidate) => (
-                    <CandidateCard
-                      key={candidate.id}
-                      candidate={{ ...candidate, isSelected: true }}
-                      onSelect={handleSelect}
-                      onViewDetails={handleViewDetails}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
 
             {!showSelected && (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -550,7 +531,6 @@ const handleLogout = async () => {
                     selectedCandidates.has(candidate.id)
                   )}
                   onDeselect={handleRemoveFromTeam}
-                  onViewDetails={handleViewDetails}
                   teamName={teamName}
                   onTeamNameChange={setTeamName}
                   onSaveTeam={handleSaveTeam}
@@ -560,6 +540,9 @@ const handleLogout = async () => {
                   onEditTeam={handleEditTeam}
                   onUpdateTeam={handleUpdateTeam}
                   showTeamsList={showTeamsList}
+                  currentTeamId={currentTeamId}
+                  originalTeamName={currentTeamId ? teams.find(t => t.id === currentTeamId)?.name || "" : ""}
+                  originalCandidateIds={currentTeamId ? teams.find(t => t.id === currentTeamId)?.candidate_ids || [] : []}
                 />
               </div>
             </div>
