@@ -5,12 +5,31 @@ import { Button } from './ui/button';
 
 export const LoginPage: React.FC = () => {
   const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-    });
+    try {
+      // For local development, you might need to use the production callback URL
+      // until you update Google Cloud Console settings
+      const redirectUrl = window.location.hostname === 'localhost' 
+        ? 'https://100-bjobs.vercel.app/auth/callback'
+        : `${window.location.origin}/auth/callback`;
 
-    if (error) {
-      console.error('Google login error:', error.message);
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUrl,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+
+      if (error) {
+        console.error('Google login error:', error.message);
+        alert('Login failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Unexpected error during login:', error);
+      alert('An unexpected error occurred. Please try again.');
     }
   };
 

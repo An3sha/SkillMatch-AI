@@ -1,7 +1,7 @@
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 import React, { useState, useMemo, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { LoginPage } from "./components/LoginPage";
+import { AuthCallback } from "./components/AuthCallback";
 import { Header } from "./components/Header";
 import { FilterPanel } from "./components/FilterPanel";
 import { CandidateCard } from "./components/CandidateCard";
@@ -14,11 +14,13 @@ import { SelectedTeam } from "./components/SelectedTeam";
 import { Pagination } from "./components/Pagination";
 import { v4 as uuidv4 } from 'uuid';
 
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [selectedCandidates, setSelectedCandidates] = useState<Set<string>>(
     new Set()
   );
@@ -52,6 +54,56 @@ function App() {
   const [skillFilter, setSkillFilter] = useState("all");
   const [companyFilter, setCompanyFilter] = useState("all");
 
+  // Immediate localStorage cleanup - runs on every render
+  useEffect(() => {
+    // Clean up all localStorage items immediately
+    localStorage.removeItem("savedTeam");
+    localStorage.removeItem("savedTeams");
+    // Don't remove the Supabase auth token here as it's needed for authentication
+  });
+
+  // Global function to manually clear localStorage (can be called from browser console)
+  useEffect(() => {
+    // @ts-expect-error - Adding global function to window
+    window.clearAppStorage = () => {
+      localStorage.removeItem("savedTeam");
+      localStorage.removeItem("savedTeams");
+      console.log("App localStorage cleared!");
+    };
+  }, []);
+
+  // Check for existing session on app load
+  useEffect(() => {
+    const checkUser = async () => {
+      // Clean up old localStorage items
+      localStorage.removeItem("savedTeam");
+      localStorage.removeItem("savedTeams");
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setIsLoggedIn(true);
+      }
+    };
+    
+    checkUser();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          setIsLoggedIn(true);
+        } else if (event === 'SIGNED_OUT') {
+          setIsLoggedIn(false);
+          // Clean up localStorage on sign out
+          localStorage.removeItem("savedTeam");
+          localStorage.removeItem("savedTeams");
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   // Load teams from Supabase on component mount
   const loadTeamsFromDB = async () => {
     const { data, error } = await supabase
@@ -69,35 +121,6 @@ function App() {
   useEffect(() => {
     loadTeamsFromDB();
   }, []);
-
-  // Save teams to localStorage whenever teams change (for backup)
-  useEffect(() => {
-    if (teams.length > 0) {
-      localStorage.setItem("savedTeams", JSON.stringify(teams));
-    }
-  }, [teams]);
-
-  // Load current team data from localStorage on component mount
-  useEffect(() => {
-    const savedTeam = localStorage.getItem("savedTeam");
-    if (savedTeam) {
-      const parsedTeam = JSON.parse(savedTeam);
-      setSelectedCandidates(new Set(parsedTeam.candidate_ids || parsedTeam.candidateIds));
-      setTeamName(parsedTeam.name || "");
-    }
-  }, []);
-
-  // Save team data to localStorage whenever selected candidates change
-  useEffect(() => {
-    if (selectedCandidates.size > 0) {
-      const teamData = {
-        name: teamName,
-        candidate_ids: Array.from(selectedCandidates),
-        saved_at: new Date().toISOString(),
-      };
-      localStorage.setItem("savedTeam", JSON.stringify(teamData));
-    }
-  }, [selectedCandidates, teamName]);
 
   async function fetchProfiles(page = 1) {
     const from = (page - 1) * 10;
@@ -206,7 +229,6 @@ function App() {
   const handleClearTeam = () => {
     setSelectedCandidates(new Set());
     setTeamName("");
-    localStorage.removeItem("savedTeam");
   };
 
   const handleDeleteTeam = async (teamId: string) => {
@@ -264,7 +286,6 @@ function App() {
       setTeamName("");
       setCurrentTeamId(null);
       setShowTeamTab(false);
-      localStorage.removeItem("savedTeam");
       alert("Team updated successfully!");
     }
   };
@@ -407,17 +428,18 @@ function App() {
     return Array.from(companies).sort();
   }, [candidates]);
 
-  if (!isLoggedIn) {
-    return <LoginPage />;
-  }
-const handleLogout = async () => {
-  await supabase.auth.signOut();
-  setIsLoggedIn(false);
-};
-  
-  
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setIsLoggedIn(false);
+    // Clean up all localStorage items
+    localStorage.removeItem("savedTeam");
+    localStorage.removeItem("savedTeams");
+    // Clear Supabase auth token
+    localStorage.removeItem("sb-fkhopyrggtmvikblwwnn-auth-token");
+  };
 
-  return (
+  // Main App Component (authenticated content)
+  const MainApp = () => (
     <div className="min-h-screen bg-gray-50">
       <Header
         selectedCount={selectedCandidates.size}
@@ -425,7 +447,7 @@ const handleLogout = async () => {
         onBuildTeam={handleBuildTeam}
         onShowTeams={handleShowTeams}
         teamsCount={teams.length}
-          onLogout={handleLogout}
+        onLogout={handleLogout}
       />
 
       <div className="flex">
@@ -577,6 +599,18 @@ const handleLogout = async () => {
         </div>
       )}
     </div>
+  );
+
+  return (
+    <Router>
+      <Routes>
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route 
+          path="/" 
+          element={isLoggedIn ? <MainApp /> : <LoginPage />} 
+        />
+      </Routes>
+    </Router>
   );
 }
 
