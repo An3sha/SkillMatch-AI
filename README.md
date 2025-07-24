@@ -58,8 +58,8 @@ An AI-powered hiring platform that helps recruiters **discover and shortlist can
 ### 1. Clone the Repo
 
 ```bash
-git clone https://github.com/your-username/talenthub.git
-cd talenthub
+git clone https://github.com/An3sha/100Bjobs
+cd 100Bjobs
 ```
 
 ### 2. Install Dependencies
