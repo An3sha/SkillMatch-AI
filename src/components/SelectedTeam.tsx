@@ -1,5 +1,5 @@
 import React from 'react';
-import { Crown, Users, MapPin, Briefcase, X, Save, Trash2, Edit, Plus } from 'lucide-react';
+import { Crown, Users, MapPin, Briefcase, X, Save, Trash2, Edit } from 'lucide-react';
 import { Candidate } from '../types';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -16,15 +16,17 @@ interface SelectedTeamProps {
   teams: Array<{
     id: string;
     name: string;
-    candidateIds: string[];
-    savedAt: string;
+    user_id?: string;
+    candidate_ids: string[];
+    saved_at: string;
   }>;
   onDeleteTeam: (teamId: string) => void;
   onEditTeam: (team: {
     id: string;
     name: string;
-    candidateIds: string[];
-    savedAt: string;
+    user_id?: string;
+    candidate_ids: string[];
+    saved_at: string;
   }) => void;
   onUpdateTeam: () => void;
   showTeamsList: boolean;
@@ -50,16 +52,7 @@ export const SelectedTeam: React.FC<SelectedTeamProps> = ({
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold text-gray-900">Your Teams</h3>
-          <Button
-            onClick={() => {
-              onClearTeam();
-              onTeamNameChange('');
-            }}
-            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Create New Team</span>
-          </Button>
+          
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -68,7 +61,7 @@ export const SelectedTeam: React.FC<SelectedTeamProps> = ({
               <CardHeader className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Crown className="w-5 h-5 text-blue-600" />
+                    <Crown className="w-5 h-5 text-[#4c4cc9]" />
                     <CardTitle className="text-lg font-semibold text-gray-900">{team.name}</CardTitle>
                   </div>
                   <div className="flex space-x-1">
@@ -76,7 +69,7 @@ export const SelectedTeam: React.FC<SelectedTeamProps> = ({
                       variant="ghost"
                       size="sm"
                       onClick={() => onEditTeam(team)}
-                      className="p-1 text-gray-400 hover:text-blue-600"
+                      className="p-1 text-gray-400 hover:text-[#4c4cc9]"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -90,9 +83,9 @@ export const SelectedTeam: React.FC<SelectedTeamProps> = ({
                     </Button>
                   </div>
                 </div>
-                <p className="text-sm text-gray-500">{team.candidateIds.length}/5 members</p>
+                <p className="text-sm text-gray-500">{team.candidate_ids.length}/5 members</p>
                 <p className="text-xs text-gray-400">
-                  Created: {new Date(team.savedAt).toLocaleDateString()}
+                  Created: {new Date(team.saved_at).toLocaleDateString()}
                 </p>
               </CardHeader>
             </Card>
@@ -131,7 +124,7 @@ export const SelectedTeam: React.FC<SelectedTeamProps> = ({
       <CardHeader className="p-6 border-b border-gray-100">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-2xl">
+            <div className="bg-gradient-to-br from-[#4c4cc9] to-indigo-600 p-3 rounded-2xl">
               <Crown className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -149,7 +142,7 @@ export const SelectedTeam: React.FC<SelectedTeamProps> = ({
             value={teamName}
             onChange={(e) => onTeamNameChange(e.target.value)}
             placeholder="Enter team name..."
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4c4cc9] focus:border-[#4c4cc9] text-sm"
           />
         </div>
       </CardHeader>
@@ -171,7 +164,7 @@ export const SelectedTeam: React.FC<SelectedTeamProps> = ({
                 
                 <CardContent className="p-4">
                 <div className="flex items-center space-x-3 mb-3">
-                  <div className="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center text-sm font-semibold">
+                  <div className="w-10 h-10 bg-[#4c4cc9] text-white rounded-xl flex items-center justify-center text-sm font-semibold">
                     {index + 1}
                   </div>
                   <div className="flex-1">
@@ -195,7 +188,7 @@ export const SelectedTeam: React.FC<SelectedTeamProps> = ({
                       <Badge
                         key={skillIndex}
                         variant="secondary"
-                        className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-lg font-medium border border-blue-100"
+                        className="px-2 py-1 bg-[#4c4cc9]/10 text-[#4c4cc9] text-xs rounded-lg font-medium border border-[#4c4cc9]/20"
                       >
                         {skill}
                       </Badge>
@@ -210,7 +203,7 @@ export const SelectedTeam: React.FC<SelectedTeamProps> = ({
                   <Button
                     variant="link"
                     onClick={() => onViewDetails(candidate)}
-                    className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors p-0 h-auto"
+                    className="text-[#4c4cc9] hover:text-[#4c4cc9]/80 text-sm font-medium transition-colors p-0 h-auto"
                   >
                     View
                   </Button>
@@ -223,13 +216,13 @@ export const SelectedTeam: React.FC<SelectedTeamProps> = ({
 
         {/* Team Complete Message */}
         {selectedCandidates.length === 5 && (
-          <Card className="mt-6 bg-gradient-to-r from-blue-50 to-emerald-50 border border-blue-200 rounded-2xl">
+          <Card className="mt-6 bg-gradient-to-r from-[#4c4cc9]/10 to-emerald-50 border border-[#4c4cc9]/20 rounded-2xl">
             <CardContent className="p-5">
             <div className="flex items-center space-x-3">
-              <Crown className="w-5 h-5 text-blue-600" />
-              <h3 className="font-semibold text-blue-900">Team Complete!</h3>
+              <Crown className="w-5 h-5 text-[#4c4cc9]" />
+              <h3 className="font-semibold text-[#4c4cc9]">Team Complete!</h3>
             </div>
-            <p className="text-sm text-blue-800 mt-2">
+            <p className="text-sm text-[#4c4cc9]/80 mt-2">
               Your dream team is ready to build the next unicorn! 🚀
             </p>
             </CardContent>
@@ -247,14 +240,14 @@ export const SelectedTeam: React.FC<SelectedTeamProps> = ({
             <span>Clear</span>
           </Button>
           <Button
-            onClick={teams.some(team => team.candidateIds.length === selectedCandidates.length && 
-              team.candidateIds.every(id => selectedCandidates.some(c => c.id === id))) ? onUpdateTeam : onSaveTeam}
+            onClick={teams.some(team => team.candidate_ids.length === selectedCandidates.length && 
+              team.candidate_ids.every(id => selectedCandidates.some(c => c.id === id))) ? onUpdateTeam : onSaveTeam}
             disabled={selectedCandidates.length === 0}
-            className="flex-1 flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 flex items-center justify-center space-x-2 bg-[#4c4cc9] hover:bg-[#4c4cc9]/90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="w-4 h-4" />
-            <span>{teams.some(team => team.candidateIds.length === selectedCandidates.length && 
-              team.candidateIds.every(id => selectedCandidates.some(c => c.id === id))) ? 'Update Team' : 'Save Team'}</span>
+            <span>{teams.some(team => team.candidate_ids.length === selectedCandidates.length && 
+              team.candidate_ids.every(id => selectedCandidates.some(c => c.id === id))) ? 'Update Team' : 'Save Team'}</span>
           </Button>
         </div>
       </CardContent>

@@ -12,6 +12,8 @@ import { ChatBot } from "./components/ChatBot";
 import { X } from "lucide-react";
 import { SelectedTeam } from "./components/SelectedTeam";
 import { Pagination } from "./components/Pagination";
+import { v4 as uuidv4 } from 'uuid';
+
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
@@ -41,22 +43,32 @@ function App() {
     Array<{
       id: string;
       name: string;
-      candidateIds: string[];
-      savedAt: string;
+      user_id?: string;
+      candidate_ids: string[];
+      saved_at: string;
     }>
   >([]);
   const [currentTeamId, setCurrentTeamId] = useState<string | null>(null);
 
-  // Load teams from localStorage on component mount
-  useEffect(() => {
-    const savedTeams = localStorage.getItem("savedTeams");
-    if (savedTeams) {
-      const parsedTeams = JSON.parse(savedTeams);
-      setTeams(parsedTeams);
+  // Load teams from Supabase on component mount
+  const loadTeamsFromDB = async () => {
+    const { data, error } = await supabase
+      .from('teams')
+      .select('*')
+      .order('saved_at', { ascending: false });
+
+    if (error) {
+      console.error('Error loading teams:', error.message);
+    } else {
+      setTeams(data || []);
     }
+  };
+
+  useEffect(() => {
+    loadTeamsFromDB();
   }, []);
 
-  // Save teams to localStorage whenever teams change
+  // Save teams to localStorage whenever teams change (for backup)
   useEffect(() => {
     if (teams.length > 0) {
       localStorage.setItem("savedTeams", JSON.stringify(teams));
@@ -68,7 +80,7 @@ function App() {
     const savedTeam = localStorage.getItem("savedTeam");
     if (savedTeam) {
       const parsedTeam = JSON.parse(savedTeam);
-      setSelectedCandidates(new Set(parsedTeam.candidateIds));
+      setSelectedCandidates(new Set(parsedTeam.candidate_ids || parsedTeam.candidateIds));
       setTeamName(parsedTeam.name || "");
     }
   }, []);
@@ -78,8 +90,8 @@ function App() {
     if (selectedCandidates.size > 0) {
       const teamData = {
         name: teamName,
-        candidateIds: Array.from(selectedCandidates),
-        savedAt: new Date().toISOString(),
+        candidate_ids: Array.from(selectedCandidates),
+        saved_at: new Date().toISOString(),
       };
       localStorage.setItem("savedTeam", JSON.stringify(teamData));
     }
@@ -127,11 +139,10 @@ function App() {
   };
 
   const handleBuildTeam = () => {
-    // Always start building a new team
+    // Show team building modal with current selections
     setShowTeamTab(true);
     setShowTeamsList(false);
-    setSelectedCandidates(new Set());
-    setTeamName("");
+    // Don't clear selectedCandidates - preserve current selections
     setCurrentTeamId(null);
   };
 
@@ -152,7 +163,7 @@ function App() {
     });
   };
 
-  const handleSaveTeam = () => {
+  const handleSaveTeam = async () => {
     if (teams.length >= 3) {
       alert(
         "You can only create up to 3 teams. Please delete an existing team first."
@@ -160,19 +171,34 @@ function App() {
       return;
     }
 
+    const user = await supabase.auth.getUser();
+    if (!user.data.user) {
+      alert("You must be logged in to save a team.");
+      return;
+    }
+
     const teamData = {
-      id: Date.now().toString(),
+      id: uuidv4(),
       name: teamName || "My Team",
-      candidateIds: Array.from(selectedCandidates),
-      savedAt: new Date().toISOString(),
+      user_id: user.data.user.id,
+      candidate_ids: Array.from(selectedCandidates),
+      saved_at: new Date().toISOString(),
     };
 
-    setTeams((prev) => [...prev, teamData]);
-    setSelectedCandidates(new Set());
-    setTeamName("");
-    setShowTeamTab(false);
-    localStorage.removeItem("savedTeam");
-    alert("Team saved successfully!");
+    const { error } = await supabase
+      .from("teams")
+      .insert([teamData]);
+
+    if (error) {
+      console.error("Error saving team:", error.message);
+      alert("Failed to save team.");
+    } else {
+      setTeams((prev) => [...prev, teamData]);
+      setSelectedCandidates(new Set());
+      setTeamName("");
+      setShowTeamTab(false);
+      alert("Team saved successfully!");
+    }
   };
 
   const handleClearTeam = () => {
@@ -181,42 +207,64 @@ function App() {
     localStorage.removeItem("savedTeam");
   };
 
-  const handleDeleteTeam = (teamId: string) => {
-    setTeams((prev) => prev.filter((team) => team.id !== teamId));
+  const handleDeleteTeam = async (teamId: string) => {
+    const { error } = await supabase
+      .from("teams")
+      .delete()
+      .eq("id", teamId);
+
+    if (error) {
+      console.error("Error deleting team:", error.message);
+      alert("Failed to delete team.");
+    } else {
+      setTeams((prev) => prev.filter((team) => team.id !== teamId));
+      alert("Team deleted successfully!");
+    }
   };
 
-  const handleEditTeam = (team: {
+  const handleEditTeam = async (team: {
     id: string;
     name: string;
-    candidateIds: string[];
-    savedAt: string;
+    user_id?: string;
+    candidate_ids: string[];
+    saved_at: string;
   }) => {
-    setSelectedCandidates(new Set(team.candidateIds));
+    setSelectedCandidates(new Set(team.candidate_ids));
     setTeamName(team.name);
     setCurrentTeamId(team.id);
     setShowTeamTab(true);
   };
 
-  const handleUpdateTeam = () => {
+  const handleUpdateTeam = async () => {
     if (!currentTeamId) return;
 
-    const updatedTeams = teams.map((team) =>
-      team.id === currentTeamId
-        ? {
-            ...team,
-            name: teamName,
-            candidateIds: Array.from(selectedCandidates),
-          }
-        : team
-    );
+    const { error } = await supabase
+      .from("teams")
+      .update({ name: teamName, candidate_ids: Array.from(selectedCandidates) })
+      .eq("id", currentTeamId);
 
-    setTeams(updatedTeams);
-    setSelectedCandidates(new Set());
-    setTeamName("");
-    setCurrentTeamId(null);
-    setShowTeamTab(false);
-    localStorage.removeItem("savedTeam");
-    alert("Team updated successfully!");
+    if (error) {
+      console.error("Error updating team:", error.message);
+      alert("Failed to update team.");
+    } else {
+      setTeams((prev) =>
+        prev.map((team) =>
+          team.id === currentTeamId
+            ? {
+                ...team,
+                name: teamName,
+                candidate_ids: Array.from(selectedCandidates),
+              }
+            : team
+        )
+      );
+      setSelectedCandidates(new Set());
+      setTeamName("");
+      setCurrentTeamId(null);
+      setShowTeamTab(false);
+      localStorage.removeItem("savedTeam");
+      alert("Team updated successfully!");
+    }
   };
 
   const filteredAndSortedCandidates = useMemo(() => {
@@ -341,8 +389,14 @@ function App() {
   const totalPages = Math.ceil(totalCount / pageSize);
 
   if (!isLoggedIn) {
-    return <LoginPage onLogin={() => setIsLoggedIn(true)} />;
+    return <LoginPage />;
   }
+const handleLogout = async () => {
+  await supabase.auth.signOut();
+  setIsLoggedIn(false);
+};
+  
+  
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -352,6 +406,7 @@ function App() {
         onBuildTeam={handleBuildTeam}
         onShowTeams={handleShowTeams}
         teamsCount={teams.length}
+          onLogout={handleLogout}
       />
 
       <div className="flex">
@@ -457,9 +512,7 @@ function App() {
                   </h2>
                   <p className="text-gray-600 mt-1">
                     {showTeamsList
-                      ? `${teams.length} team${
-                          teams.length !== 1 ? "s" : ""
-                        } created`
+                      ? `${teams.length} team${teams.length !== 1 ? "s" : ""} created`
                       : `Selected ${selectedCandidates.size}/5 candidates`}
                   </p>
                 </div>

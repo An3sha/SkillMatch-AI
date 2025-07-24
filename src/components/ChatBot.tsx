@@ -126,9 +126,9 @@ export const ChatBot: React.FC = () => {
         // Header section (## 1., ## 2., etc.)
         const headerText = section.trim();
         return (
-          <h4 key={index} className="font-semibold text-gray-900 mt-4 mb-2 text-sm">
+          <h5 key={index} className="font-semibold text-gray-900 mt-4 mb-2 text-xs">
             {headerText}
-          </h4>
+          </h5>
         );
       } else {
         // Content section after header
@@ -170,144 +170,70 @@ export const ChatBot: React.FC = () => {
     });
   };
 
-  const formatCandidateResponse = (content: string) => {
-    // Split content by candidate sections (## 1., ## 2., etc.)
-    const sections = content.split(/(## \d+\.)/);
-    
-    return sections.map((section, index) => {
-      if (index === 0) {
-        // Introduction text (before any ##)
-        return section.trim() ? (
-          <div key={index} className="mb-4">
-            <p className="text-sm leading-relaxed text-gray-700">{section.trim()}</p>
-          </div>
-        ) : null;
-      } else if (index % 2 === 1) {
-        // Header section (## 1., ## 2., etc.)
-        const headerText = section.trim();
-        return (
-          <div key={index} className="mt-6 mb-3">
-            <h3 className="text-lg font-bold text-[#4c4cc9] mb-2">
-              {headerText}
-            </h3>
-          </div>
-        );
-      } else {
-        // Candidate card content
-        const lines = section.trim().split('\n').filter(line => line.trim());
-        if (lines.length === 0) return null;
+const formatCandidateResponse = (content: string) => {
+  const cleaned = content
+    .replace(/\*\*/g, '') // remove bold
+    .replace(/#+/g, '')   // remove markdown headers
+    .replace(/^- /gm, '') // remove list dashes
+    .replace(/\n{2,}/g, '\n') // remove extra line breaks
+    .trim();
 
-        // Extract candidate name and location from first line
-        const firstLine = lines[0];
-        const nameLocationMatch = firstLine.match(/(.*?) - (.*)/);
-        const candidateName = nameLocationMatch ? nameLocationMatch[1].trim() : firstLine;
-        const candidateLocation = nameLocationMatch ? nameLocationMatch[2].trim() : '';
+  const sections = cleaned.split(/\d+\.\s*/).filter(Boolean);
 
-        // Parse other candidate details
-        const candidateDetails: { [key: string]: string } = {};
-        lines.slice(1).forEach(line => {
-          const trimmedLine = line.trim();
-          if (!trimmedLine) return;
-          
-          // Handle different formats
-          let match = trimmedLine.match(/Salary Expectation: (.*)/);
-          if (match) {
-            candidateDetails['Salary Expectation'] = match[1];
-            return;
-          }
-          
-          match = trimmedLine.match(/Experience: (.*)/);
-          if (match) {
-            candidateDetails['Experience'] = match[1];
-            return;
-          }
-          
-          match = trimmedLine.match(/Skills: (.*)/);
-          if (match) {
-            candidateDetails['Skills'] = match[1];
-            return;
-          }
-          
-          match = trimmedLine.match(/Education: (.*)/);
-          if (match) {
-            candidateDetails['Education'] = match[1];
-            return;
-          }
-          
-          match = trimmedLine.match(/Highlights: (.*)/);
-          if (match) {
-            candidateDetails['Highlights'] = match[1];
-            return;
-          }
-        });
+  return sections.map((block, index) => {
+    const lines = block.split('\n').map(l => l.trim()).filter(Boolean);
+    if (!lines.length) return null;
 
-        return (
-          <div key={index} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4 hover:shadow-md transition-shadow">
-            {/* Candidate Header */}
-            <div className="flex items-start justify-between mb-3">
-              <div>
-                <h4 className="font-bold text-gray-900 text-base">{candidateName}</h4>
-                {candidateLocation && (
-                  <p className="text-sm text-gray-600">{candidateLocation}</p>
-                )}
-              </div>
-            </div>
+    const [nameLine, ...rest] = lines;
+    const [name, location] = nameLine.includes(' - ')
+      ? nameLine.split(' - ').map(x => x.trim())
+      : [nameLine.trim(), ''];
 
-            {/* Candidate Details */}
-            <div className="space-y-2">
-              {candidateDetails['Salary Expectation'] && (
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs font-semibold text-gray-500 w-20">Salary:</span>
-                  <span className="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                    {candidateDetails['Salary Expectation']}
-                  </span>
-                </div>
-              )}
-              
-              {candidateDetails['Experience'] && (
-                <div className="flex items-start space-x-2">
-                  <span className="text-xs font-semibold text-gray-500 w-20 mt-0.5">Experience:</span>
-                  <span className="text-sm text-gray-700 flex-1">{candidateDetails['Experience']}</span>
-                </div>
-              )}
-              
-              {candidateDetails['Skills'] && (
-                <div className="flex items-start space-x-2">
-                  <span className="text-xs font-semibold text-gray-500 w-20 mt-0.5">Skills:</span>
-                  <div className="flex-1">
-                    <div className="flex flex-wrap gap-1">
-                      {candidateDetails['Skills'].split(', ').map((skill, skillIndex) => (
-                        <span
-                          key={skillIndex}
-                          className="inline-block bg-[#4c4cc9]/10 text-[#4c4cc9] text-xs px-2 py-1 rounded-full border border-[#4c4cc9]/20"
-                        >
-                          {skill.trim()}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              {candidateDetails['Education'] && (
-                <div className="flex items-start space-x-2">
-                  <span className="text-xs font-semibold text-gray-500 w-20 mt-0.5">Education:</span>
-                  <span className="text-sm text-gray-700 flex-1">{candidateDetails['Education']}</span>
-                </div>
-              )}
-              
-              {candidateDetails['Highlights'] && (
-                <div className="flex items-start space-x-2">
-                  <span className="text-xs font-semibold text-gray-500 w-20 mt-0.5">Highlights:</span>
-                  <span className="text-sm text-gray-700 flex-1">{candidateDetails['Highlights']}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      }
-    });
-  };
+    const iconMap: Record<string, string> = {
+      Salary: '💰',
+      'Salary Expectation': '💰',
+      Experience: '💼',
+      Skills: '🛠️',
+      Education: '🎓',
+      Highlights: '⭐',
+      Availability: '🕒',
+    };
+
+    return (
+      <div
+        key={index}
+        className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm mb-4"
+      >
+        <div className="mb-3">
+          <h4 className="text-lg font-bold text-gray-900">{name}</h4>
+          {location && <p className="text-sm text-gray-500">📍{location}</p>}
+        </div>
+
+        <div className="space-y-4 text-sm">
+  {rest.map((line, i) => {
+    const match = line.match(/^(.*?):\s*(.*)$/);
+    if (!match) return <p key={i} className="text-gray-600">{line}</p>;
+
+    const [_, rawLabel, rawValue] = match;
+    const label = rawLabel.trim();
+    const value = rawValue.trim();
+    return (
+      <div key={i}>
+        <div className="text-gray-600 font-medium">
+          {iconMap[label] || '•'} {label}
+        </div>
+        <div className="text-gray-800 mt-1">{value}</div>
+      </div>
+    );
+  })}
+</div>
+
+      </div>
+    );
+  });
+};
+
+
 
   return (
     <div className="fixed bottom-6 right-6 z-50">

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Target, Award } from 'lucide-react';
+import { Users, Target, Award, LogOut } from 'lucide-react';
 import { Badge } from './ui/badge';
 
 interface HeaderProps {
@@ -8,9 +8,10 @@ interface HeaderProps {
   onBuildTeam: () => void;
   onShowTeams: () => void;
   teamsCount: number;
+  onLogout: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ selectedCount, totalCandidates, onBuildTeam, onShowTeams, teamsCount }) => {
+export const Header: React.FC<HeaderProps> = ({ selectedCount, totalCandidates, onBuildTeam, onShowTeams, teamsCount, onLogout }) => {
   return (
     <header className="bg-white border-b border-gray-100 px-6 py-4">
       <div className="w-full flex items-center justify-between">
@@ -19,7 +20,7 @@ export const Header: React.FC<HeaderProps> = ({ selectedCount, totalCandidates, 
             <Target className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Talent Hub</h1>
+            <h1 className="text-2xl font-semibold text-gray-900">100B Jobs 🚀</h1>
             <p className="text-sm text-gray-500">Find and hire top talent</p>
           </div>
         </div>
@@ -52,6 +53,13 @@ export const Header: React.FC<HeaderProps> = ({ selectedCount, totalCandidates, 
             >
               Build Team
             </button>
+             <button
+          onClick={onLogout}
+          className="bg-red-400 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-1 rounded-lg transition"
+        >
+          <LogOut className="w-4 h-4" />
+          Logout
+        </button>
           </div>
         </div>
       </div>
