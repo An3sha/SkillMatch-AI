@@ -9,7 +9,7 @@ An AI-powered hiring platform that helps recruiters **discover and shortlist can
 ## ✨ Features
 
 - 🔍 **Candidate Discovery** — Fast filtering by skills, location, salary, and experience
-- 💬 **AI Assistant (RAG)** — Ask natural questions like “React developers in Delhi with salary under 100k”
+- 💬 **AI Assistant (RAG)** — Ask natural questions like “React developers with salary under 100k”
 - ✅ **Team Builder** — Select up to 5 candidates and save up to 3 teams
 - 🔐 **Google Auth** — Login via Supabase Auth
 - ☁️ **Supabase DB** — All candidates, teams, and sessions stored in Supabase
