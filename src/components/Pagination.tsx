@@ -63,7 +63,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center w-full py-8">
+    <div className="flex flex-col items-center justify-center w-full py-2">
       <div className="flex items-center justify-center space-x-2 max-w-4xl w-full">
         <button
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}
