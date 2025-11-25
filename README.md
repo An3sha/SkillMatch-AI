@@ -1,4 +1,4 @@
-# 100B Jobs 🚀
+# SkillMatch AI 🚀
 
 An AI-powered hiring platform that helps recruiters **discover and shortlist candidates** in seconds using intelligent filtering, team building, and natural language search powered by OpenAI embeddings.
 
